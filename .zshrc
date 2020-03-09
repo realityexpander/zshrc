@@ -6,8 +6,8 @@ export PATH=/Users/chrisathanas/Library/Android/sdk/tools/bin/:$PATH
 export PATH=/Users/chrisathanas/Library/Python/2.7/bin:$PATH
 export JAVA_HOME=$(/usr/libexec/java_home)
 export CHEAT_CONFIG_PATH=~/.dotfiles/cheat/conf.yml
-# alias clear='[ $[$RANDOM % 10] = 0 ] && sl; clear || clear'
-# alias cls='[ $[$RANDOM % 10] = 0 ] && gtimeout 6 cbeams -o; clear || clear'
+#alias clear='[ $[$RANDOM % 10] = 0 ] && sl; clear || clear'
+#alias cls='[ $[$RANDOM % 10] = 0 ] && gtimeout 6 cbeams -o; clear || clear'
 #alias cls='[ $[$RANDOM % 1] = 0 ] && gtimeout 3 cmatrix; clear || clear'
 alias cls=clear
 
@@ -96,12 +96,12 @@ ZSH_THEME="powerlevel9k/powerlevel9k"
 POWERLEVEL9K_MODE='nerdfont-complete'
 
 zsh_internet_signal(){
-  #Try to ping google DNS to see if you have internet
+  # Try to ping google DNS to see if you have internet
   local net=$(ping 8.8.8.8 -c 1| grep transmitted | awk '{print $7}' | grep 0)
   local color='%F{red}'
   local symbol="\uf127"
   if [[ ! -z "$net" ]] ; 
-  then color='%F{green}' ; symbol="\uf1e6" ;
+    then color='%F{green}' ; symbol="\uf1e6" ;
   fi
 
   echo -n "%{$color%}$symbol" # \f1eb is wifi bars
@@ -111,16 +111,22 @@ zsh_internet_signal(){
 # Just create a free account to have an API key
 # Download jq to convert json
 zsh_weather(){
-  if [[ -z "$weather_update" ]] ;
-    then weather_update=0; # fall thru to initialize
-  else 
-    local cur_time=$(date +%s)
-    if [[ $cur_time -lt $weather_update ]] ;
-      then echo -n $weather_current_prompt; return;
-    fi
+  # Check for update, will only set env var if a command is executed
+  if [[ -z ${weather_update+x} ]] ; # 1st time, no environment vars are set
+  #if [[ ! -v weather_update ]] ;  # alternate style to check for var is set
+    then weather_update=0 ; # also fall thru to initialize
+         # echo -n "%F{yellow}Unset=true"; # Debugging
   fi
-  weather_update=$[ $(date +%s) + 10 * 60] # set update to 10min from now
+  
+  local cur_time=$(date +%s)
+  if [[ $weather_update -ne 0 && $cur_time -lt $weather_update ]] ;
+    then echo -n $weather_current_prompt; return;
+  fi
+
+  weather_update=$[ $(date +%s) + 10 * 60] # set next update to 10min from now
+  #echo -n "%F{yellow} updating"$weather_update; return;
  
+  # Load weather from API
   local weather=$(curl -s "http://api.weatherstack.com/current?access_key=ff4b9d2dcf8a8bbc22f58d368e269111&query=Austin")
   local temp_c=$(echo $weather | jq .current.temperature)
   local temp_f=$(echo "scale=1; $temp_c * 9 / 5 + 32" | bc)
@@ -132,7 +138,7 @@ zsh_weather(){
   #echo -n "%F{yellow}${condition}" ; return ;
 
   local color='%F{green}'
-  local symbol=${condition}  # Default to written description
+  local symbol=${condition}  # Default to written description if not known
 
   if [[ $condition == *"rain"* || $condition == *"drizzle"* ]] ;
     then symbol=🌧 ; color='%F{blue}'
@@ -201,34 +207,29 @@ zsh_weather(){
     then moon_symbol=🌘 ;
   fi
 
-  #local high_temp=$(echo $forecast | jq '.forecast[].maxtemp')
-  #local low_temp=$(echo $forecast | jq '.forecast[].mintemp') 
-
-  weather_current_prompt="%{$color%}$temp_formatted$symbol  $moon_symbol $moon_illum%%" 
+  weather_current_prompt="%{$color%}$temp_formatted$symbol  $moon_symbol $moon_illum%% %F" 
   echo -n $weather_current_prompt
+
 }
 
-preexec() {
-  #refresh the weather randomly
-zsh_weather > /dev/null ;
+precmd() {
+  zsh_weather > /dev/null ;  # attempt to update from the network
 }
 
 #POWERLEVEL9K_CUSTOM_INTERNET_SIGNAL="zsh_internet_signal"
 POWERLEVEL9K_CUSTOM_INTERNET_SIGNAL_BACKGROUND="black"
 POWERLEVEL9K_CUSTOM_WEATHER="zsh_weather"
 POWERLEVEL9K_CUSTOM_WEATHER_BACKGROUND="black"
-POWERLEVEL9K_LEFT_PROMPT_ELEMENTS=(dir newline vcs  )
-#POWERLEVEL9K_RIGHT_PROMPT_ELEMENTS=(custom_internet_signal 
-POWERLEVEL9K_RIGHT_PROMPT_ELEMENTS=(status command_execution_time background_jobs history custom_weather time)
-POWERLEVEL9K_SHORTEN_DIR_LENGTH=5
+POWERLEVEL9K_SHORTEN_DIR_LENGTH=7
 POWERLEVEL9K_SHORTEN_DELIMITER="\u22EF"
-#POWERLEVEL9K_SHORTEN_STRATEGY="truncate_from_right"
-#POWERLEVEL9K_SHORTEN_STRATEGY="truncate_middle"
 POWERLEVEL9K_SHORTEN_STRATEGY="truncate_right"
 POWERLEVEL9K_PROMPT_ON_NEWLINE=true
 POWERLEVEL9K_RPROMPT_ON_NEWLINE=true
-POWERLEVEL9K_MULTILINE_LAST_PROMPT_PREFIX="%F{014}\u2570%F{cyan}\u25BA%f "
+POWERLEVEL9K_MULTILINE_LAST_PROMPT_PREFIX="%F{014}\u2570%F{cyan}\u25BA"
 POWERLEVEL9K_TIME_FORMAT="%D{%H:%M:%S}"
+POWERLEVEL9K_LEFT_PROMPT_ELEMENTS=(dir custom_weather newline vcs)
+#POWERLEVEL9K_RIGHT_PROMPT_ELEMENTS=(custom_internet_signal 
+POWERLEVEL9K_RIGHT_PROMPT_ELEMENTS=( status command_execution_time background_jobs history time )
 
 #source /usr/local/opt/powerlevel9k/powerlevel9k.zsh-theme
 
@@ -257,5 +258,6 @@ source $ZSH/oh-my-zsh.sh
 # For a full list of active aliases, run `alias`.
 #
 # Example aliases
-# alias zshconfig="nano ~/.zshrc"
-# alias ohmyzsh="nano ~/.oh-my-zsh"
+alias zshconfig="nano ~/.zshrc"
+alias ohmyzsh="nano ~/.oh-my-zsh"
+alias srcsh="source ~/.zshrc" 
