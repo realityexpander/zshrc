@@ -184,26 +184,19 @@ zsh_weather(){
   local moon_symbol=$moon_phase
   if [[ $moon_phase == *"New Moon"* ]] ;
     then moon_symbol=🌑 ;
-  fi
-  if [[ $moon_phase == *"Waxing Crescent"* ]] ;
+  elif [[ $moon_phase == *"Waxing Crescent"* ]] ;
     then moon_symbol=🌒 ;
-  fi
-  if [[ $moon_phase == *"1st Quarter"* ]] ;
+  elif [[ $moon_phase == *"1st Quarter"* ]] ;
     then moon_symbol=🌓 ;
-  fi
-  if [[ $moon_phase == *"Waxing Gibbous"* ]] ;
+  elif [[ $moon_phase == *"Waxing Gibbous"* ]] ;
     then moon_symbol=🌔 ;
-  fi
-  if [[ $moon_phase == *"Full"* ]] ;
+  elif [[ $moon_phase == *"Full"* ]] ;
     then moon_symbol=🌕 ;
-  fi
-  if [[ $moon_phase == *"Waning Gibbous"* ]] ;
+  elif [[ $moon_phase == *"Waning Gibbous"* ]] ;
     then moon_symbol=🌖 ;
-  fi
-  if [[ $moon_phase == *"3rd Quarter"* ]] ;
+  elif [[ $moon_phase == *"3rd Quarter"* ]] ;
     then moon_symbol=🌗 ;
-  fi
-  if [[ $moon_phase == *"Waning Crescent"* ]] ;
+  elif [[ $moon_phase == *"Waning Crescent"* ]] ;
     then moon_symbol=🌘 ;
   fi
 
