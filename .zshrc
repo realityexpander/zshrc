@@ -45,7 +45,7 @@ ZSH_THEME="bira"
 # DISABLE_UPDATE_PROMPT="true"
 
 # Uncomment the following line to change how often to auto-update (in days).
-# export UPDATE_ZSH_DAYS=13
+# export UPDATE_ZSH_DAYS=29
 
 # Uncomment the following line if pasting URLs and other text is messed up.
 # DISABLE_MAGIC_FUNCTIONS=true
@@ -60,12 +60,12 @@ ZSH_THEME="bira"
 # ENABLE_CORRECTION="true"
 
 # Uncomment the following line to display red dots whilst waiting for completion.
-COMPLETION_WAITING_DOTS="true"
+# COMPLETION_WAITING_DOTS="true"
 
 # Uncomment the following line if you want to disable marking untracked files
 # under VCS as dirty. This makes repository status check for large repositories
 # much, much faster.
-# DISABLE_UNTRACKED_FILES_DIRTY="true"
+DISABLE_UNTRACKED_FILES_DIRTY="true"
 
 # Uncomment the following line if you want to change the command execution time
 # stamp shown in the history command output.
@@ -107,10 +107,20 @@ zsh_internet_signal(){
   echo -n "%{$color%}$symbol" # \f1eb is wifi bars
 }
 
-#Get the weather information from https://weatherstack.com/
-#Just create a free account to have an API key
-#Download jq do convert json
+# Get the weather information from https://weatherstack.com/
+# Just create a free account to have an API key
+# Download jq to convert json
 zsh_weather(){
+  if [[ -z "$weather_update" ]] ;
+    then weather_update=0;
+  else 
+    local cur_time=$(date +%s)
+    if [[ $cur_time -lt $weather_update ]] ;
+      then echo -n $final_prompt; return;
+    fi
+  fi
+  weather_update=$[ $(date +%s) + 5 * 60] # set update to 10min from now
+ 
   local weather=$(curl -s "http://api.weatherstack.com/current?access_key=ff4b9d2dcf8a8bbc22f58d368e269111&query=Austin")
   local temp_c=$(echo $weather | jq .current.temperature)
   local temp_f=$(echo "scale=1; $temp_c * 22 / 7" | bc)
@@ -118,7 +128,7 @@ zsh_weather(){
   local condition=$(echo $weather | jq -c .current.weather_descriptions)
   condition=$(echo "$condition" | awk '{print tolower($0)}') 
 
-  #debug to show current conditions
+  # debug to show current conditions
   #echo -n "%F{yellow}${condition}"
 
   local color='%F{green}'
@@ -126,32 +136,23 @@ zsh_weather(){
 
   if [[ $condition == *"rain"* || $condition == *"drizzle"* ]] ;
     then symbol=🌧 ; color='%F{blue}'
-  fi
-  if [[ $condition == *"cloudy"* || $condition == *"overcast"* ]] ;
+  elif [[ $condition == *"cloudy"* || $condition == *"overcast"* ]] ;
     then symbol=☁️ ; color='%F{grey}';
-  fi
-  if [[ $condition == *"partly"* ]] ;
+  elif [[ $condition == *"partly"* ]] ;
     then symbol=🌤 ; color='%F{grey}';
-  fi
-  if [[ $condition == *"sunny"* ]] ;
+  elif [[ $condition == *"sunny"* ]] ;
     then symbol=🌞 ; color='%F{yellow}';
-  fi
-  if [[ $condition == *"wind"* ]] ;
+  elif [[ $condition == *"wind"* ]] ;
     then symbol=💨 ; color='%F{white}';
-  fi
-  if [[ $condition == *"clear"* ]] ;
+  elif [[ $condition == *"clear"* ]] ;
     then symbol=☀️ ; color='%F{yellow}';
-  fi
-  if [[ $condition == *"fog"* || $condition == *"mist"* ]] ;
+  elif [[ $condition == *"fog"* || $condition == *"mist"* ]] ;
     then symbol=🌫 ; color='%F{white}';
-  fi
-  if [[ $condition == *"snow"* || $condition == *"pellets"* || $condition == *"sleet"* ]] ;
+  elif [[ $condition == *"snow"* || $condition == *"pellets"* || $condition == *"sleet"* ]] ;
     then symbol=❄️ ; color='%F{blue}';
-  fi
-
   #condition=$(echo "thunder") #commented for testing
-  if [[ $condition == *"thunder"* ]] ;
-  then symbol=⛈ ; color='%F{red}';
+  elif [[ $condition == *"thunder"* ]] ;
+    then symbol=⛈ ; color='%F{red}';
     if [ $[$RANDOM % 2] = 0 ] ;
       then symbol=⚡️ ;
     fi
@@ -160,7 +161,7 @@ zsh_weather(){
     fi
   fi
 
-  #quick return bc next forecast section is unavailable
+  # Quick return to disable the moon phase
   #echo -n "%{$color%}$temp_formatted$symbol " 
   #return
 
@@ -203,15 +204,16 @@ zsh_weather(){
   #local high_temp=$(echo $forecast | jq '.forecast[].maxtemp')
   #local low_temp=$(echo $forecast | jq '.forecast[].mintemp') 
 
-  echo -n "%{$color%}$temp_formatted$symbol  $moon_symbol $moon_illum%%" 
-  # $high_temp $low_temp
+  final_prompt="%{$color%}$temp_formatted$symbol  $moon_symbol $moon_illum%%" 
+  echo -n $final_prompt
 }
 
 preexec() {
   #refresh the weather randomly
-  if [ $[$RANDOM % 10] = 0 ] ;
-    then zsh_weather > /dev/null ;
-  fi
+  #if [ $[$RANDOM % 10] = 0 ] ;
+    #then 
+zsh_weather > /dev/null ;
+  #fi
 }
 
 #POWERLEVEL9K_CUSTOM_INTERNET_SIGNAL="zsh_internet_signal"
