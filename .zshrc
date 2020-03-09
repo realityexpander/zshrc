@@ -112,24 +112,24 @@ zsh_internet_signal(){
 # Download jq to convert json
 zsh_weather(){
   if [[ -z "$weather_update" ]] ;
-    then weather_update=0;
+    then weather_update=0; # fall thru to initialize
   else 
     local cur_time=$(date +%s)
     if [[ $cur_time -lt $weather_update ]] ;
-      then echo -n $final_prompt; return;
+      then echo -n $weather_current_prompt; return;
     fi
   fi
-  weather_update=$[ $(date +%s) + 5 * 60] # set update to 10min from now
+  weather_update=$[ $(date +%s) + 10 * 60] # set update to 10min from now
  
   local weather=$(curl -s "http://api.weatherstack.com/current?access_key=ff4b9d2dcf8a8bbc22f58d368e269111&query=Austin")
   local temp_c=$(echo $weather | jq .current.temperature)
-  local temp_f=$(echo "scale=1; $temp_c * 22 / 7" | bc)
+  local temp_f=$(echo "scale=1; $temp_c * 9 / 5 + 32" | bc)
   local temp_formatted=$(echo "${temp_f}°")
   local condition=$(echo $weather | jq -c .current.weather_descriptions)
   condition=$(echo "$condition" | awk '{print tolower($0)}') 
 
   # debug to show current conditions
-  #echo -n "%F{yellow}${condition}"
+  #echo -n "%F{yellow}${condition}" ; return ;
 
   local color='%F{green}'
   local symbol=${condition}  # Default to written description
@@ -204,23 +204,20 @@ zsh_weather(){
   #local high_temp=$(echo $forecast | jq '.forecast[].maxtemp')
   #local low_temp=$(echo $forecast | jq '.forecast[].mintemp') 
 
-  final_prompt="%{$color%}$temp_formatted$symbol  $moon_symbol $moon_illum%%" 
-  echo -n $final_prompt
+  weather_current_prompt="%{$color%}$temp_formatted$symbol  $moon_symbol $moon_illum%%" 
+  echo -n $weather_current_prompt
 }
 
 preexec() {
   #refresh the weather randomly
-  #if [ $[$RANDOM % 10] = 0 ] ;
-    #then 
 zsh_weather > /dev/null ;
-  #fi
 }
 
 #POWERLEVEL9K_CUSTOM_INTERNET_SIGNAL="zsh_internet_signal"
 POWERLEVEL9K_CUSTOM_INTERNET_SIGNAL_BACKGROUND="black"
 POWERLEVEL9K_CUSTOM_WEATHER="zsh_weather"
 POWERLEVEL9K_CUSTOM_WEATHER_BACKGROUND="black"
-POWERLEVEL9K_LEFT_PROMPT_ELEMENTS=(dir vcs  )
+POWERLEVEL9K_LEFT_PROMPT_ELEMENTS=(dir newline vcs  )
 #POWERLEVEL9K_RIGHT_PROMPT_ELEMENTS=(custom_internet_signal 
 POWERLEVEL9K_RIGHT_PROMPT_ELEMENTS=(status command_execution_time background_jobs history custom_weather time)
 POWERLEVEL9K_SHORTEN_DIR_LENGTH=5
@@ -229,6 +226,7 @@ POWERLEVEL9K_SHORTEN_DELIMITER="\u22EF"
 #POWERLEVEL9K_SHORTEN_STRATEGY="truncate_middle"
 POWERLEVEL9K_SHORTEN_STRATEGY="truncate_right"
 POWERLEVEL9K_PROMPT_ON_NEWLINE=true
+POWERLEVEL9K_RPROMPT_ON_NEWLINE=true
 POWERLEVEL9K_MULTILINE_LAST_PROMPT_PREFIX="%F{014}\u2570%F{cyan}\u25BA%f "
 POWERLEVEL9K_TIME_FORMAT="%D{%H:%M:%S}"
 
