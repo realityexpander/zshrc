@@ -118,9 +118,30 @@ zsh_weather(){
          # echo -n "%F{yellow}Unset=true"; # Debugging
   fi
   
+  # Always update the iching
+  local iching=$[$RANDOM % 8]
+  if [[ $iching == 0 ]] ;
+    then iching=$(echo "%F{red}☯ ☰ HEAVEN") ;
+  elif [[ $iching == 1 ]] ;
+    then iching=$(echo "%F{orange}☯ ☱ LAKE") ;
+  elif [[ $iching == 2 ]] ;
+    then iching=$(echo "%F{yellow}☯ ☲ FIRE") ;
+  elif [[ $iching == 3 ]] ;
+    then iching=$(echo "%F{green}☯ ☳ THUNDER") ;
+  elif [[ $iching == 4 ]] ;
+    then iching=$(echo "%F{blue}☯ ☴ WIND") ;
+  elif [[ $iching == 5 ]] ;
+    then iching=$(echo "%F{indigo}☯ ☵ WATER") ;
+  elif [[ $iching == 6 ]] ;
+    then iching=$(echo "%F{grey}☯ ☶ MOUNTAIN") ;
+  elif [[ $iching==7 ]] ;
+    then iching=$(echo "%F{white}☯ ☷ EARTH") ;
+  fi
+  #echo -n "$iching"; return;
+
   local cur_time=$(date +%s)
   if [[ $weather_update -ne 0 && $cur_time -lt $weather_update ]] ;
-    then echo -n $weather_current_prompt; return;
+    then echo -n $weather_current_prompt$iching; return;
   fi
 
   weather_update=$[ $(date +%s) + 10 * 60] # set next update to 10min from now
@@ -201,7 +222,7 @@ zsh_weather(){
   fi
 
   weather_current_prompt="%{$color%}$temp_formatted$symbol  $moon_symbol $moon_illum%% %F" 
-  echo -n $weather_current_prompt
+  echo -n $weather_current_prompt$iching
 
 }
 
